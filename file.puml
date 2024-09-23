@@ -1,0 +1,33 @@
+@startuml
+actor User
+participant "ETL Orchestrator" as Orchestrator
+participant "Data Source 1" as Source1 << (D,orchid) >> {
+  path="dbfs:/path/to/table1"
+  filters={"column1": "value1"}
+}
+participant "Data Source 2" as Source2 << (D,orchid) >> {
+  schema="database"
+  name="table2"
+  filters={"column2": "value2"}
+}
+participant "Data Source 3" as Source3 << (D,orchid) >> {
+  schema="database"
+  name="table3"
+}
+participant "Result Table" as Result << (D,orchid) >> {
+  path="dbfs:/path/to/result_table"
+}
+
+User -> Orchestrator: Start ETL Process
+Orchestrator -> Source1: load_table()
+Source1 --> Orchestrator: Data Loaded
+Orchestrator -> Source2: load_table()
+Source2 --> Orchestrator: Data Loaded
+Orchestrator -> Source3: load_table()
+Source3 --> Orchestrator: Data Loaded
+Orchestrator -> Orchestrator: join_tables(criteria=[("table1.id", "table2.id"), ("table1.name", "table2.name")], type="inner")
+Orchestrator -> Orchestrator: join_tables(criteria=[("table2.id", "table3.id")], type="left")
+Orchestrator -> Result: write_result()
+Result --> Orchestrator: Data Written
+Orchestrator -> User: ETL Process Completed
+@enduml
