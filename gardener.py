@@ -61,7 +61,7 @@ def orchestrate_etl(etl_steps, dao: DataAccessObject):
 
     # Context to store intermediate results
     context = {}
-    tables = []
+    tables = {}
     joins = []
 
     for step in etl_steps:
@@ -71,11 +71,14 @@ def orchestrate_etl(etl_steps, dao: DataAccessObject):
             table = Table(name=target, path=params.get('path'), schema=params.get('schema'))
             filters = params.get('filters', {})
             context[target] = etl_functionsaction
-            tables.append(context[target])
+            tables[target] = context[target]
         elif action == 'join_tables':
-            joins.append({'criteria': params['criteria'], 'type': params['type']})
+            join_info = {'tables': [tables[params['left']], tables[params['right']]], 'criteria': params['criteria'], 'type': params['type']}
+            joins.append(join_info)
+            context[target] = join_tables(join_info['tables'], [join_info])
+            tables[target] = context[target]
         elif action == 'write_result':
-            result = etl_functions'join_tables'
+            result = context[params['source']]
             etl_functionsaction
 
     spark.stop()
