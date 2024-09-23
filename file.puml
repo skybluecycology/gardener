@@ -14,6 +14,24 @@ participant "Data Source 3" as Source3 << (D,orchid) >> {
   schema="database"
   name="table3"
 }
+participant "Intermediate Result 1" as Intermediate1 << (D,orchid) >> {
+  left="Source1"
+  right="Source2"
+  criteria=[("table1.id", "table2.id"), ("table1.name", "table2.name")]
+  type="inner"
+}
+participant "Intermediate Result 2" as Intermediate2 << (D,orchid) >> {
+  left="Source2"
+  right="Source3"
+  criteria=[("table2.id", "table3.id")]
+  type="left"
+}
+participant "Final Result" as FinalResult << (D,orchid) >> {
+  left="Intermediate1"
+  right="Intermediate2"
+  criteria=[("Intermediate1.common_column", "Intermediate2.common_column")]
+  type="inner"
+}
 participant "Result Table" as Result << (D,orchid) >> {
   path="dbfs:/path/to/result_table"
 }
@@ -25,8 +43,12 @@ Orchestrator -> Source2: load_table()
 Source2 --> Orchestrator: Data Loaded
 Orchestrator -> Source3: load_table()
 Source3 --> Orchestrator: Data Loaded
-Orchestrator -> Orchestrator: join_tables(criteria=[("table1.id", "table2.id"), ("table1.name", "table2.name")], type="inner")
-Orchestrator -> Orchestrator: join_tables(criteria=[("table2.id", "table3.id")], type="left")
+Orchestrator -> Intermediate1: join_tables()
+Intermediate1 --> Orchestrator: Data Joined
+Orchestrator -> Intermediate2: join_tables()
+Intermediate2 --> Orchestrator: Data Joined
+Orchestrator -> FinalResult: join_tables()
+FinalResult --> Orchestrator: Data Joined
 Orchestrator -> Result: write_result()
 Result --> Orchestrator: Data Written
 Orchestrator -> User: ETL Process Completed
